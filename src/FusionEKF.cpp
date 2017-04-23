@@ -2,7 +2,6 @@
 #include "tools.h"
 #include "Eigen/Dense"
 #include <iostream>
-#define FIRSTVAL 0.0001
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -100,11 +99,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       */
       ekf_.x_ << measurement_pack.raw_measurements_[0], measurement_pack.raw_measurements_[1], 0, 0;
     }
-    // Deal with the special case initialisation problems
-    if (fabs(ekf_.x_[0]) < FIRSTVAL && fabs(ekf_.x_[1]) < FIRSTVAL) {
-      ekf_.x_[0] = FIRSTVAL;
-      ekf_.x_[1] = FIRSTVAL;
-    }
     previous_timestamp_ = measurement_pack.timestamp_;
 
     // done initializing, no need to predict or update
@@ -128,11 +122,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = measurement_pack.timestamp_;
 
-
   ekf_.F_ << 1, 0, dt, 0,
-             0, 1, 0, dt,
-             0, 0, 1, 0,
-             0, 0, 0, 1;
+    0, 1, 0, dt,
+    0, 0, 1, 0,
+    0, 0, 0, 1;
 
   float noise_ax = 9.0;
   float noise_ay = 9.0;
@@ -143,22 +136,22 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   float t2 = (pow(dt, 3) / 2);
   float t3 = pow(dt, 2);
   ekf_.Q_ << t1*noise_ax, 0, t2*noise_ax, 0,
-             0, t1*noise_ay, 0, t2*noise_ay,
-             t2*noise_ax, 0, t3*noise_ax, 0,
-             0, t2*noise_ay, 0, t3*noise_ay;
+    0, t1*noise_ay, 0, t2*noise_ay,
+    t2*noise_ax, 0, t3*noise_ax, 0,
+    0, t2*noise_ay, 0, t3*noise_ay;
 
   ekf_.Predict();
 
 
   /*****************************************************************************
-   *  Update
-   ****************************************************************************/
+  *  Update
+  ****************************************************************************/
 
   /**
-   TODO:
-     * Use the sensor type to perform the update step.
-     * Update the state and covariance matrices.
-   */
+  TODO:
+  * Use the sensor type to perform the update step.
+  * Update the state and covariance matrices.
+  */
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // Radar updates
@@ -168,13 +161,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-  } else {
+  }
+  else {
     // Laser updates
     cout << "\nlaser update\n";
     //measurement matrix
     ekf_.H_ = MatrixXd(2, 4);
     ekf_.H_ << 1, 0, 0, 0,
-               0, 1, 0, 0;
+      0, 1, 0, 0;
     ekf_.R_ = R_laser_;
     ekf_.Update(measurement_pack.raw_measurements_);
   }

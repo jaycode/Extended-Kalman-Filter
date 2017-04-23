@@ -51,6 +51,7 @@ void check_files(ifstream& in_file, string& in_name,
 
 int main(int argc, char* argv[]) {
 
+  //printf("test");
   check_arguments(argc, argv);
 
   string in_file_name_ = argv[1];
@@ -60,6 +61,9 @@ int main(int argc, char* argv[]) {
   ofstream out_file_(out_file_name_.c_str(), ofstream::out);
 
   check_files(in_file_, in_file_name_, out_file_, out_file_name_);
+
+  ofstream dbg_file;
+  dbg_file.open ("dbg_file.txt");
 
   vector<MeasurementPackage> measurement_pack_list;
   vector<GroundTruthPackage> gt_pack_list;
@@ -74,7 +78,7 @@ int main(int argc, char* argv[]) {
     MeasurementPackage meas_package;
     GroundTruthPackage gt_package;
     istringstream iss(line);
-    long long timestamp;
+    long long timestamp = 0;
 
     // reads first element from the current line
     iss >> sensor_type;
@@ -99,16 +103,20 @@ int main(int argc, char* argv[]) {
       meas_package.sensor_type_ = MeasurementPackage::RADAR;
       meas_package.raw_measurements_ = VectorXd(3);
       float ro;
-      float phi;
+      float theta;
       float ro_dot;
       iss >> ro;
-      iss >> phi;
+      iss >> theta;
       iss >> ro_dot;
-      meas_package.raw_measurements_ << ro, phi, ro_dot;
+      meas_package.raw_measurements_ << ro, theta, ro_dot;
       iss >> timestamp;
       meas_package.timestamp_ = timestamp;
       measurement_pack_list.push_back(meas_package);
     }
+    //cout << "measurement: " << meas_package.raw_measurements_ <<endl;
+    //cout << "timestamp: " << timestamp <<endl;
+    //cout << "line: " << line <<endl;
+    
 
     // read ground truth data to compare later
     float x_gt;
@@ -122,6 +130,8 @@ int main(int argc, char* argv[]) {
     gt_package.gt_values_ = VectorXd(4);
     gt_package.gt_values_ << x_gt, y_gt, vx_gt, vy_gt;
     gt_pack_list.push_back(gt_package);
+
+    measurement_pack_list[measurement_pack_list.size()-1].ground_truth_ = gt_package.gt_values_; 
   }
 
   // Create a Fusion EKF instance
@@ -180,5 +190,9 @@ int main(int argc, char* argv[]) {
     in_file_.close();
   }
 
+  if (dbg_file.is_open()) {
+    dbg_file.close();
+  }
+  
   return 0;
 }
