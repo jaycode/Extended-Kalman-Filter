@@ -1,11 +1,10 @@
-#include "kalman_filter.h"
 #include <iostream>
+#include "kalman_filter.h"
 #define SMALLVAL 0.001
 
-using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-
+using namespace std;
 
 KalmanFilter::KalmanFilter() {}
 
@@ -65,7 +64,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   TODO:
     * update the state by using Extended Kalman Filter equations
   */
-
   if (x_[0] > -SMALLVAL && x_[0] < SMALLVAL) {
     return;
   }
